@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .message.show {
+            display: block;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .profile-content {
+            text-align: center;
+        }
+        .profile-header {
+            margin-bottom: 30px;
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px;
+            color: white;
+            font-weight: bold;
+        }
+        .profile-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .profile-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .profile-info-item:last-child {
+            border-bottom: none;
+        }
+        .profile-info-label {
+            font-weight: 600;
+            color: #666;
+        }
+        .profile-info-value {
+            color: #333;
+        }
+        .profile-description {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .profile-description label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #666;
+            text-align: left;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .save-btn {
+            margin-top: 10px;
+            background: #28a745;
+        }
+        .save-btn:hover {
+            background: #218838;
+        }
+        .logout-btn {
+            margin-top: 20px;
+            background: #dc3545;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="main-title">🔐 Login</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('login')">Login</button>
+            <button class="tab" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <div id="login-tab" class="tab-content active">
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+
+        <div id="register-tab" class="tab-content">
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-username">Username</label>
+                    <input type="text" id="register-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-nickname">Nickname (optional)</label>
+                    <input type="text" id="register-nickname" placeholder="Your display name">
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <button type="submit">Register</button>
+            </form>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div id="profile-content" class="profile-content" style="display: none;">
+            <div class="profile-header">
+                <h1>👤 Profile</h1>
+            </div>
+            <div class="profile-avatar" id="profile-avatar"></div>
+            <div class="profile-info">
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Username:</span>
+                    <span class="profile-info-value" id="profile-username"></span>
+                </div>
+                <div class="profile-info-item" id="profile-nickname-item" style="display: none;">
+                    <span class="profile-info-label">Nickname:</span>
+                    <span class="profile-info-value" id="profile-nickname"></span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">User ID:</span>
+                    <span class="profile-info-value" id="profile-userid"></span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Status:</span>
+                    <span class="profile-info-value" style="color: #28a745;">✓ Authenticated</span>
+                </div>
+            </div>
+            <div class="profile-description">
+                <label for="profile-description">Description:</label>
+                <textarea id="profile-description" placeholder="Tell us about yourself..."></textarea>
+                <button class="save-btn" onclick="saveDescription()">Save Description</button>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        let accessToken = null;
+        let refreshToken = null;
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'login') {
+                document.querySelector('.tab').classList.add('active');
+                document.getElementById('login-tab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('register-tab').classList.add('active');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type} show`;
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 5000);
+        }
+
+        async function register(username, password, nickname) {
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, nickname: nickname || null })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('Registration successful! Please login.', 'success');
+                    switchTab('login');
+                } else {
+                    showMessage(data.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error', 'error');
+            }
+        }
+
+        async function login(username, password) {
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    accessToken = data.accessToken;
+                    refreshToken = data.refreshToken;
+                    
+                    // Decode JWT to get user info
+                    const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
+                    
+                    // Update profile page
+                    document.getElementById('profile-username').textContent = data.username;
+                    document.getElementById('profile-userid').textContent = tokenPayload.id;
+                    document.getElementById('profile-avatar').textContent = data.username.charAt(0).toUpperCase();
+                    
+                    // Fetch full profile including description
+                    await loadProfile();
+                    
+                    // Show profile page
+                    document.getElementById('profile-content').style.display = 'block';
+                    document.getElementById('main-title').style.display = 'none';
+                    document.getElementById('login-tab').style.display = 'none';
+                    document.getElementById('register-tab').style.display = 'none';
+                    document.querySelector('.tabs').style.display = 'none';
+                    showMessage('Login successful!', 'success');
+                } else {
+                    showMessage(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error', 'error');
+            }
+        }
+
+        async function refreshAccessToken() {
+            try {
+                const response = await fetch('/api/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    accessToken = data.accessToken;
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (error) {
+                return false;
+            }
+        }
+
+        async function loadProfile() {
+            try {
+                const response = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (response.status === 403) {
+                    // Token expired, try to refresh
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        const retryResponse = await fetch('/api/profile', {
+                            headers: {
+                                'Authorization': `Bearer ${accessToken}`
+                            }
+                        });
+                        if (retryResponse.ok) {
+                            const profileData = await retryResponse.json();
+                            document.getElementById('profile-description').value = profileData.description || '';
+                            if (profileData.nickname !== undefined && profileData.nickname !== null) {
+                                document.getElementById('profile-nickname').innerHTML = profileData.nickname;
+                                document.getElementById('profile-nickname-item').style.display = 'flex';
+                            } else {
+                                document.getElementById('profile-nickname').innerHTML = '';
+                                document.getElementById('profile-nickname-item').style.display = 'none';
+                            }
+                        }
+                    }
+                } else if (response.ok) {
+                    const profileData = await response.json();
+                    document.getElementById('profile-description').value = profileData.description || '';
+                    if (profileData.nickname !== undefined && profileData.nickname !== null) {
+                        document.getElementById('profile-nickname').innerHTML = profileData.nickname;
+                        document.getElementById('profile-nickname-item').style.display = 'flex';
+                    } else {
+                        document.getElementById('profile-nickname').innerHTML = '';
+                        document.getElementById('profile-nickname-item').style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        async function saveDescription() {
+            try {
+                const description = document.getElementById('profile-description').value;
+                
+                let response = await fetch('/api/profile/description', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ description })
+                });
+
+                if (response.status === 403) {
+                    // Token expired, try to refresh
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        response = await fetch('/api/profile/description', {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${accessToken}`
+                            },
+                            body: JSON.stringify({ description })
+                        });
+                    } else {
+                        showMessage('Session expired. Please login again.', 'error');
+                        logout();
+                        return;
+                    }
+                }
+
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('Description saved successfully!', 'success');
+                } else {
+                    showMessage(data.error || 'Failed to save description', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error', 'error');
+            }
+        }
+
+        async function logout() {
+            if (refreshToken) {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                });
+            }
+            accessToken = null;
+            refreshToken = null;
+            document.getElementById('profile-content').style.display = 'none';
+            document.getElementById('main-title').style.display = 'block';
+            document.getElementById('login-tab').style.display = '';
+            document.getElementById('register-tab').style.display = '';
+            document.querySelector('.tabs').style.display = 'flex';
+            switchTab('login');
+            showMessage('Logged out successfully', 'success');
+        }
+
+        document.getElementById('register-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const nickname = document.getElementById('register-nickname').value;
+            const password = document.getElementById('register-password').value;
+            register(username, password, nickname);
+        });
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            login(username, password);
+        });
+    </script>
+</body>
+</html>
+
