@@ -254,6 +254,37 @@ app.put("/api/profile/description", authenticateToken, async (req, res) => {
   }
 });
 
+// Update user nickname endpoint
+app.put("/api/profile/nickname", authenticateToken, async (req, res) => {
+  try {
+    const { nickname } = req.body;
+    const userId = req.user.id;
+
+    if (nickname === undefined) {
+      return res.status(400).json({ error: "Nickname is required" });
+    }
+
+    await db.run("UPDATE users SET nickname = ? WHERE id = ?", [
+      nickname || null,
+      userId,
+    ]);
+
+    console.log(
+      `[PROFILE] ✓ User ${
+        req.user.username
+      } updated nickname at ${new Date().toISOString()}`
+    );
+
+    res.json({
+      message: "Nickname updated successfully",
+      nickname: nickname || null,
+    });
+  } catch (error) {
+    console.error("Update nickname error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Get user profile endpoint
 app.get("/api/profile", authenticateToken, async (req, res) => {
   try {

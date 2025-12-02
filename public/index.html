@@ -267,6 +267,15 @@
                     <span class="profile-info-label">Status:</span>
                     <span class="profile-info-value" style="color: #28a745;">✓ Authenticated</span>
                 </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Description:</span>
+                    <span class="profile-info-value" id="profile-description-label"></span>
+                </div>
+            </div>
+            <div class="profile-description">
+                <label for="profile-nickname-input">Nickname:</label>
+                <input type="text" id="profile-nickname-input" placeholder="Your display name">
+                <button class="save-btn" onclick="saveNickname()">Save Nickname</button>
             </div>
             <div class="profile-description">
                 <label for="profile-description">Description:</label>
@@ -280,6 +289,39 @@
     <script>
         let accessToken = null;
         let refreshToken = null;
+
+        // Helper functions for localStorage
+        function getAccessToken() {
+            return localStorage.getItem('accessToken');
+        }
+
+        function getRefreshToken() {
+            return localStorage.getItem('refreshToken');
+        }
+
+        function setTokens(access, refresh) {
+            if (access) {
+                localStorage.setItem('accessToken', access);
+                accessToken = access;
+            }
+            if (refresh) {
+                localStorage.setItem('refreshToken', refresh);
+                refreshToken = refresh;
+            }
+        }
+
+        function clearTokens() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            accessToken = null;
+            refreshToken = null;
+        }
+
+        // Load tokens from localStorage on page load
+        function loadTokensFromStorage() {
+            accessToken = getAccessToken();
+            refreshToken = getRefreshToken();
+        }
 
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -333,8 +375,8 @@
 
                 const data = await response.json();
                 if (response.ok) {
-                    accessToken = data.accessToken;
-                    refreshToken = data.refreshToken;
+                    // Store tokens in localStorage
+                    setTokens(data.accessToken, data.refreshToken);
                     
                     // Decode JWT to get user info
                     const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
@@ -372,7 +414,8 @@
 
                 const data = await response.json();
                 if (response.ok) {
-                    accessToken = data.accessToken;
+                    // Store new access token in localStorage
+                    setTokens(data.accessToken, null);
                     return true;
                 } else {
                     return false;
@@ -401,7 +444,10 @@
                         });
                         if (retryResponse.ok) {
                             const profileData = await retryResponse.json();
-                            document.getElementById('profile-description').value = profileData.description || '';
+                            const description = profileData.description || '';
+                            document.getElementById('profile-description-label').innerHTML = description;
+                            document.getElementById('profile-description').value = description;
+                            document.getElementById('profile-nickname-input').value = profileData.nickname || '';
                             if (profileData.nickname !== undefined && profileData.nickname !== null) {
                                 document.getElementById('profile-nickname').innerHTML = profileData.nickname;
                                 document.getElementById('profile-nickname-item').style.display = 'flex';
@@ -413,7 +459,10 @@
                     }
                 } else if (response.ok) {
                     const profileData = await response.json();
-                    document.getElementById('profile-description').value = profileData.description || '';
+                    const description = profileData.description || '';
+                    document.getElementById('profile-description-label').innerHTML = description;
+                    document.getElementById('profile-description').value = description;
+                    document.getElementById('profile-nickname-input').value = profileData.nickname || '';
                     if (profileData.nickname !== undefined && profileData.nickname !== null) {
                         document.getElementById('profile-nickname').innerHTML = profileData.nickname;
                         document.getElementById('profile-nickname-item').style.display = 'flex';
@@ -424,6 +473,57 @@
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);
+            }
+        }
+
+        async function saveNickname() {
+            try {
+                const nickname = document.getElementById('profile-nickname-input').value;
+                
+                let response = await fetch('/api/profile/nickname', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ nickname: nickname || null })
+                });
+
+                if (response.status === 403) {
+                    // Token expired, try to refresh
+                    const refreshed = await refreshAccessToken();
+                    if (refreshed) {
+                        response = await fetch('/api/profile/nickname', {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${accessToken}`
+                            },
+                            body: JSON.stringify({ nickname: nickname || null })
+                        });
+                    } else {
+                        showMessage('Session expired. Please login again.', 'error');
+                        logout();
+                        return;
+                    }
+                }
+
+                const data = await response.json();
+                if (response.ok) {
+                    // Update the label as well
+                    if (data.nickname) {
+                        document.getElementById('profile-nickname').innerHTML = data.nickname;
+                        document.getElementById('profile-nickname-item').style.display = 'flex';
+                    } else {
+                        document.getElementById('profile-nickname').innerHTML = '';
+                        document.getElementById('profile-nickname-item').style.display = 'none';
+                    }
+                    showMessage('Nickname saved successfully!', 'success');
+                } else {
+                    showMessage(data.error || 'Failed to save nickname', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error', 'error');
             }
         }
 
@@ -461,6 +561,8 @@
 
                 const data = await response.json();
                 if (response.ok) {
+                    // Update the label as well
+                    document.getElementById('profile-description-label').innerHTML = description;
                     showMessage('Description saved successfully!', 'success');
                 } else {
                     showMessage(data.error || 'Failed to save description', 'error');
@@ -478,8 +580,8 @@
                     body: JSON.stringify({ refreshToken })
                 });
             }
-            accessToken = null;
-            refreshToken = null;
+            // Clear tokens from localStorage
+            clearTokens();
             document.getElementById('profile-content').style.display = 'none';
             document.getElementById('main-title').style.display = 'block';
             document.getElementById('login-tab').style.display = '';
@@ -487,6 +589,79 @@
             document.querySelector('.tabs').style.display = 'flex';
             switchTab('login');
             showMessage('Logged out successfully', 'success');
+        }
+
+        // Check if user is already logged in on page load
+        async function checkExistingSession() {
+            loadTokensFromStorage();
+            if (accessToken && refreshToken) {
+                try {
+                    // Try to load profile to verify token is still valid
+                    const response = await fetch('/api/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+
+                    if (response.status === 403) {
+                        // Token expired, try to refresh
+                        const refreshed = await refreshAccessToken();
+                        if (refreshed) {
+                            // Retry profile load
+                            const retryResponse = await fetch('/api/profile', {
+                                headers: {
+                                    'Authorization': `Bearer ${accessToken}`
+                                }
+                            });
+                            if (retryResponse.ok) {
+                                const profileData = await retryResponse.json();
+                                await restoreSession(profileData);
+                            } else {
+                                clearTokens();
+                            }
+                        } else {
+                            clearTokens();
+                        }
+                    } else if (response.ok) {
+                        const profileData = await response.json();
+                        await restoreSession(profileData);
+                    } else {
+                        clearTokens();
+                    }
+                } catch (error) {
+                    console.error('Error checking session:', error);
+                    clearTokens();
+                }
+            }
+        }
+
+        async function restoreSession(profileData) {
+            // Decode JWT to get user info
+            const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
+            
+            // Update profile page
+            document.getElementById('profile-username').textContent = profileData.username;
+            document.getElementById('profile-userid').textContent = tokenPayload.id;
+            document.getElementById('profile-avatar').textContent = profileData.username.charAt(0).toUpperCase();
+            const description = profileData.description || '';
+            document.getElementById('profile-description-label').innerHTML = description;
+            document.getElementById('profile-description').value = description;
+            document.getElementById('profile-nickname-input').value = profileData.nickname || '';
+            
+            if (profileData.nickname !== undefined && profileData.nickname !== null) {
+                document.getElementById('profile-nickname').innerHTML = profileData.nickname;
+                document.getElementById('profile-nickname-item').style.display = 'flex';
+            } else {
+                document.getElementById('profile-nickname').innerHTML = '';
+                document.getElementById('profile-nickname-item').style.display = 'none';
+            }
+            
+            // Show profile page
+            document.getElementById('profile-content').style.display = 'block';
+            document.getElementById('main-title').style.display = 'none';
+            document.getElementById('login-tab').style.display = 'none';
+            document.getElementById('register-tab').style.display = 'none';
+            document.querySelector('.tabs').style.display = 'none';
         }
 
         document.getElementById('register-form').addEventListener('submit', (e) => {
@@ -503,6 +678,9 @@
             const password = document.getElementById('login-password').value;
             login(username, password);
         });
+
+        // Check for existing session on page load
+        checkExistingSession();
     </script>
 </body>
 </html>
